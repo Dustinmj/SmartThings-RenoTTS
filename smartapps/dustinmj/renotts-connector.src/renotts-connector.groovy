@@ -19,9 +19,9 @@ definition(
     author: "Dustin Jorge",
     description: "Discover/Connect functionality for RenoTTS server implementations.",
     category: "Fun & Social",
-    iconUrl: "https://icon.renotts.com/renotts.bl.2x.png",
-    iconX2Url: "https://icon.renotts.com/renotts.bl.2x.png",
-    iconX3Url: "https://icon.renotts.com/renotts.bl.3x.png")
+    iconUrl: "http://icon.renotts.com/renotts.bl.2x.png",
+    iconX2Url: "http://icon.renotts.com/renotts.bl.2x.png",
+    iconX3Url: "http://icon.renotts.com/renotts.bl.3x.png")
 
 preferences {
 	page(name: "deviceDiscovery", title: "RenoTTS Device Setup", content: "deviceDiscovery")
