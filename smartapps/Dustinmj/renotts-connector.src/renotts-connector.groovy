@@ -14,7 +14,7 @@
  *
  */
 definition(
-    name: "RenoTTS Connector",
+    name: "Renotts Connector",
     namespace: "Dustinmj",
     author: "Dustin Jorge",
     description: "Discover/Connect functionality for RenoTTS server implementations.",
