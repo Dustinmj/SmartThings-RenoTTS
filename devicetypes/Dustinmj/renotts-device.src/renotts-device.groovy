@@ -32,7 +32,7 @@ preferences {
 }
 
 metadata {
-	definition (name: "RenoTTS Device", namespace: "dustinmj", author: "Dustin M Jorge") {
+	definition (name: "RenoTTS Device", namespace: "Dustinmj", author: "Dustin Jorge") {
 		capability "Music Player"
 		capability "Speech Synthesis"
 		command "speak", ["string"]
