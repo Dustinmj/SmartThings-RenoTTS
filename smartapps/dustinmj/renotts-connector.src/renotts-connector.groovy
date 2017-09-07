@@ -15,7 +15,7 @@
  */
 definition(
     name: "Renotts Connector",
-    namespace: "Dustinmj",
+    namespace: "dustinmj",
     author: "Dustin Jorge",
     description: "Discover/Connect functionality for RenoTTS server implementations.",
     category: "Fun & Social",
