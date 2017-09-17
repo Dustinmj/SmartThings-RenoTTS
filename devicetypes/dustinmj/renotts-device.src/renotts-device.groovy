@@ -24,7 +24,7 @@ preferences {
                                                                                                     "Mizuki", "Naja", "Nicole", "Raveena", "Ricardo", "Penelope", "Ruben",
                                                                                                     "Russell", "Tatyana", "Vitoria"])
             input(name: "pref_sampleRate", type: "enum", title: "Sample Rate:", options: ["8000","16000","22050"], defaultValue: "22050")
-            input(name: "pref_testTxt", type: "text", title: "Test Text:", defaultValue:"Hello my name is %name%")
+            input(name: "pref_testTxt", type: "text", title: "Test Text:", defaultValue:"Hello, my name is %name%")
       }
     section("Advanced Settings"){
         	input(name: "pref_padding", type: "enum", title: "Pad With Silence:", defaultValue:"None", options:["None","Before","After","Both"])
