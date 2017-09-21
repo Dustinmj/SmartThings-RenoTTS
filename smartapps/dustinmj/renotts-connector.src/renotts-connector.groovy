@@ -28,6 +28,7 @@ preferences {
 }
 
 def deviceDiscovery() {
+	cleanDevices()
 	def options = [:]
 	def devices = getVerifiedDevices()
 	devices.each {
@@ -87,17 +88,6 @@ void ssdpSubscribe() {
 	subscribe(location, "ssdpTerm.urn:schemas-dustinjorge-com:device:TTSEngine:1", ssdpHandler)
 }
 
-Map verifiedDevices() {
-	def devices = getVerifiedDevices()
-	def map = [:]
-	devices.each {
-		def value = it.value.name ?: "RenoTTS Device ${it.value.ssdpUSN.split(':')[1][-3..-1]}"
-		def key = it.value.mac
-		map["${key}"] = value
-	}
-	map
-}
-
 void verifyDevices() {
 	def devices = getDevices().findAll { it?.value?.verified != true }
 	devices.each {
@@ -115,6 +105,16 @@ void verifyDevice( device )
 
 def getVerifiedDevices() {
 	getDevices().findAll{ it.value.verified == true }
+}
+
+def cleanDevices() {
+	def children = getChildDevices()
+    def devices = getDevices()
+    devices.each{
+    	if( !children.contains(it) ){
+        	devices.remove(it)
+        }
+    }
 }
 
 def getDevices() {
