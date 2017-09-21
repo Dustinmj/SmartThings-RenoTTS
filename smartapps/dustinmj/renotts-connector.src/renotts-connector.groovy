@@ -28,7 +28,6 @@ preferences {
 }
 
 def deviceDiscovery() {
-	cleanDevices()
 	def options = [:]
 	def devices = getVerifiedDevices()
 	devices.each {
@@ -46,6 +45,7 @@ def deviceDiscovery() {
     // ... without submitOnChange, options are lost on page refresh,
     // must be selected again.
     if( !selectedDevices ) {
+		cleanDevices()
     	ssdpDiscover()
     }else
     {
