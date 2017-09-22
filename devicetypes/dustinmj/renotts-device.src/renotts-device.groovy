@@ -12,6 +12,12 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *
+ *	22-08-2017
+ *		- Prevent network and hub back-end spamming in discovery process
+ *		- Implement additional methods to support Music Player device type	
+ *		- Remove unneeded methods	
+ *
  */
 preferences {
 	section("Basic Settings"){
@@ -35,11 +41,17 @@ metadata {
 	definition (name: "Renotts Device", namespace: "dustinmj", author: "Dustin Jorge") {
 		capability "Music Player"
 		capability "Speech Synthesis"
+        // speech synthesis
 		command "speak", ["string"]
+		command "speakText", ["string"]
+        // media player
 		command "playTextAndResume", ["string"]
 		command "playTextAndRestore", ["string"]
 		command "playTrack", ["string"]
 		command "playTrack", ["string", "object"]
+		command "playTrackAtVolume", ["string","number"]
+		command "playTrackAndResume", ["string","number","number"]
+		command "playTextAndResume", ["string","number"]
 		command "setTrack", ["string"]
 		command "play"
 
@@ -81,7 +93,7 @@ metadata {
 ********* System Methods *********
 **********************************/
 
-def parse(String description) {}// smartthings parsing is wacky, use callback methods instead
+def parse(String description) {}//use callback methods instead
 
 def parseServiceResponse( physicalgraph.device.HubResponse response ) {
     // response recieved, ip:port is fine
@@ -128,6 +140,7 @@ def parseTTSResponse( physicalgraph.device.HubResponse response ) {
 def installed() {
     updateServices()
 	unschedule()
+    // ping renotts every 5 minutes
 	runEvery5Minutes("updateServices")
 	state.installed = true
 }
@@ -189,7 +202,13 @@ def speak( String txt) {
     sendHubCommand( getTTSRequest( txt ) )
 }
 
+
+def speakText( String txt ) {
+	speak(txt)
+}
+
 // music player hooks
+
 def play() {
 	if( state.toSpeakTrack != null )
     {
@@ -214,7 +233,19 @@ def playTrackAndRestore( String txt ) {
 	speak( txt )
 }
 
+def playTrackAndRestore( txt, n ) {
+	speak( txt )
+}
+
 def playTrackAndResume( String txt ) {
+	speak( txt )
+}
+
+def playTrackAndResume( txt, n ) {
+	speak( txt )
+}	
+
+def playTrackAtVolume( txt, n ) {
 	speak( txt )
 }
 
@@ -410,17 +441,3 @@ private clearToSpeak(){
     state.toSpeak = ""
     state.toSpeakWhen = null
 }
-
-/*********************************
-****** Unused - Music Player *****
-*********************************/
-
-def setLevel() {}
-def mute() {}
-def previousTrack() {}
-def unmute() {}
-def resumeTrack() {}
-def restoreTrack() {}
-def pause() {}
-def stop() {}
-def nextTrack() {}
