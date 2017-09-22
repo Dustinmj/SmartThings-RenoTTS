@@ -15,7 +15,8 @@
  *
  *	22-08-2017
  *		- Prevent network and hub back-end spamming in discovery process
- *		- Implement additional methods to support Music Player device type	
+ *		- Implement additional methods to support Music Player device type
+ *      - Fix broken music player methods, add Audio Notification and Notification device type capabilities
  *		- Remove unneeded methods	
  *
  */
@@ -39,21 +40,30 @@ preferences {
 
 metadata {
 	definition (name: "Renotts Device", namespace: "dustinmj", author: "Dustin Jorge") {
-		capability "Music Player"
 		capability "Speech Synthesis"
+		capability "Music Player"
+        capability "Audio Notification"
+        capability "Notification"
+        
         // speech synthesis
 		command "speak", ["string"]
 		command "speakText", ["string"]
-        // media player
-		command "playTextAndResume", ["string"]
-		command "playTextAndRestore", ["string"]
-		command "playTrack", ["string"]
-		command "playTrack", ["string", "object"]
-		command "playTrackAtVolume", ["string","number"]
-		command "playTrackAndResume", ["string","number","number"]
-		command "playTextAndResume", ["string","number"]
-		command "setTrack", ["string"]
+        
+        // music player
+		command "playTrack", ["string", "number"]
+        command "setTrack", ["string"]
 		command "play"
+        
+		// audio notification
+		command "playText", ["string","number"]
+		command "playTrack", ["string","number"]
+		command "playTextAndResume", ["string","number"]
+		command "playTextAndRestore", ["string","number"]
+		command "playTrackAndResume", ["string","number","number"]
+		command "playTrackAndRestore", ["string","number"]
+        
+        // notification
+        command "deviceNotification", ["string"]
 
 		command "sendTestQuery"
 		command "updateServices"
@@ -186,7 +196,10 @@ def sync( hexIP, hexPort, macAddr ){
 ******   handle commands   *******
 *********************************/
 
-// speech synthesis hook
+// speech synthesis
+// command "speak", ["string"]
+// command "speakText", ["string"]
+
 def speak( String txt) {
 	logmsg( "Speaking ${txt}" )
 	sendOff()
@@ -207,7 +220,11 @@ def speakText( String txt ) {
 	speak(txt)
 }
 
-// music player hooks
+        
+// music player
+// command "playTrack", ["string", "number"]
+// command "setTrack", ["string"]
+// command "play"
 
 def play() {
 	if( state.toSpeakTrack != null )
@@ -217,35 +234,46 @@ def play() {
     }
 }
 
-def setTrack( txt ) {
+def setTrack( String txt ) {
 	state.toSpeakTrack = txt
 }
 
-def playTrack( String txt ) {
+def playTrack( String txt, int n ) {
 	speak( txt )
 }
 
-def playTrack( String txt, Object o ) {
+// audio notification
+// command "playText", ["string","number"]
+// music player -> command "playTrack", ["string","number"]
+// command "playTextAndResume", ["string","number"]
+// command "playTextAndRestore", ["string","number"]
+// command "playTrackAndResume", ["string","number"]
+// command "playTrackAndRestore", ["string","number"]
+
+def playText( String txt, int n ) {
 	speak( txt )
 }
 
-def playTrackAndRestore( String txt ) {
+def playTextAndResume( String txt, int n ) {
 	speak( txt )
 }
 
-def playTrackAndRestore( txt, n ) {
+def playTextAndRestore( String txt, int n ) {
 	speak( txt )
 }
 
-def playTrackAndResume( String txt ) {
+def playTrackAndResume( String txt, int n ) {
 	speak( txt )
 }
 
-def playTrackAndResume( txt, n ) {
+def playTrackAndRestore( String txt, int n ) {
 	speak( txt )
-}	
+}
 
-def playTrackAtVolume( txt, n ) {
+// notification
+// command "deviceNotification", ["string"]
+
+def deviceNotification( String txt ) {
 	speak( txt )
 }
 
