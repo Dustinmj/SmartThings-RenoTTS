@@ -12,6 +12,13 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *
+ *
+ *	22-08-2017
+ *		- Fix persistent devices existing in list despite being uncommunicative, even if currently installed
+ *		- Implement 30 second communication window requirement for devices to be listed in connector
+ *		- Fix device label not correctly updating when ip address changes
+ *
  */
 definition(
     name: "Renotts Connector",
@@ -31,27 +38,12 @@ def deviceDiscovery() {
 	def options = [:]
 	def devices = getVerifiedDevices()
 	devices.each {
-		def value = it.value.name ?: "UPnP Device ${it.value.ssdpUSN.split(':')[1][-3..-1]}"
+		def value = "RenoTTS: " + convertHexToIP(it.value.networkAddress)
 		def key = it.value.mac
 		options["${key}"] = value
 	}
 	ssdpSubscribe()
-    // smarthings doesn't unregister the refresh interval when
-    // submitOnChange happens, page is reloaded and the dynamic page
-    // will refresh multiple times every 4 seconds, to prevent
-    // blasting ssdp requests, we just schedule discovery when
-    // a device has already been requested... we should have
-    // sent a few discoveries prior to that anyway, so no big deal
-    // ... without submitOnChange, options are lost on page refresh,
-    // must be selected again.
-    if( !selectedDevices ) {
-		cleanDevices()
-    	ssdpDiscover()
-    }else
-    {
-    	unschedule("ssdpDiscover")
-		runEvery1Minute("ssdpDiscover")
-    }
+    ssdpDiscover()
 	verifyDevices()
 	return dynamicPage(name: "deviceDiscovery", title: "Discovery Started!", nextPage: "install", refreshInterval: 2, install: true, uninstall: true) {
 		section("Please wait while we discover your RenoTTS Device(s). Discovery can take a bit, so sit back and relax! Select your device(s) below once discovered.") {
@@ -80,11 +72,17 @@ def initialize() {
 }
 
 void ssdpDiscover() {
+	// prevent spamming the network
+    if( state.lastSsdpBroadcast != null && state.lastSsdpBroadcast + 2000 > now() ) return
+	state.lastSsdpBroadcast = now()   
 	// non-standard schema prevents unnecessary responses from random devices
 	sendHubCommand(new physicalgraph.device.HubAction("lan discovery urn:schemas-dustinjorge-com:device:TTSEngine:1", physicalgraph.device.Protocol.LAN))
 }
 
 void ssdpSubscribe() {
+	// prevent spamming the back-end
+    if( state.lastSsdpSubscribe != null && state.lastSsdpSubscribe + 10000 > now() ) return
+	state.lastSsdpSubscribe = now()   
 	subscribe(location, "ssdpTerm.urn:schemas-dustinjorge-com:device:TTSEngine:1", ssdpHandler)
 }
 
@@ -104,17 +102,10 @@ void verifyDevice( device )
 }
 
 def getVerifiedDevices() {
-	getDevices().findAll{ it.value.verified == true }
-}
-
-def cleanDevices() {
-	def children = getChildDevices()
-    def devices = getDevices()
-    devices.each{
-    	if( !children.contains(it) ){
-        	devices.remove(it)
-        }
-    }
+	// we're only interested in displaying devices that are communicating with the connector
+	def communicationWindow = now() - 30000
+	getDevices().findAll{ it.value.verified == true && 
+    					  it.value.lastCommunication > communicationWindow }
 }
 
 def getDevices() {
@@ -135,9 +126,9 @@ def addDevices() {
 			}
 		}
 		if (!d) {
-			log.info( "Creating RenoTTS connector with: ${selectedDevice?.value?.mac}" )
+			info( "Creating RenoTTS connector with: ${selectedDevice?.value?.mac}" )
 			def child = addChildDevice("dustinmj", "RenoTTS Device", selectedDevice?.value?.mac, selectedDevice?.value?.hub, [
-				"label": selectedDevice?.value?.name ?: "RenoTTS Device"])
+				"label": "Renotts: " + convertHexToIP(selectedDevice?.value?.networkAddress) ?: "RenoTTS Device"])
             child?.sync( selectedDevice?.value?.networkAddress, selectedDevice?.value?.deviceAddress, selectedDevice?.value?.mac )
 		}
 	}
@@ -159,16 +150,18 @@ def ssdpHandler(evt) {
 	parsedEvent << ["hub":hub]
 	def devices = getDevices()
 	String ssdpUSN = parsedEvent.ssdpUSN.toString()
-   	log.info( "Received ssdp broadcast from: ${parsedEvent?.networkAddress} with mac address ${parsedEvent?.mac}." );
+   	info( "Received ssdp broadcast from: ${parsedEvent?.networkAddress} with mac address ${parsedEvent?.mac}." );
 	if (devices."${ssdpUSN}") {
 		def d = devices."${ssdpUSN}"
+        d.lastCommunication = now()
         // sync can be lost, so we sync on every ssdp match
 		def child = getChildDevice(parsedEvent.mac)
-        log.info( "Updating child ${parsedEvent.mac} with new data: ${parsedEvent.networkAddress}, ${parsedEvent.deviceAddress}")
+        info( "Updating child ${parsedEvent.mac} with new data: ${parsedEvent.networkAddress}, ${parsedEvent.deviceAddress}")
 		child?.sync( parsedEvent.networkAddress, parsedEvent.deviceAddress, parsedEvent.mac )
 		if (d.networkAddress != parsedEvent.networkAddress || d.deviceAddress != parsedEvent.deviceAddress) {
 			d.networkAddress = parsedEvent.networkAddress
 			d.deviceAddress = parsedEvent.deviceAddress
+            d.verified = false
 		}
 	} else{
 		devices << ["${ssdpUSN}": parsedEvent]
@@ -182,6 +175,14 @@ void deviceDescriptionHandler(physicalgraph.device.HubResponse hubResponse) {
 	if (device) {
 		device.value << [name: body?.device?.friendlyName?.text(), model:body?.device?.modelName?.text(), verified: true]
 	}
+}
+
+private void info( String txt ){
+	log.info(txt)
+}
+
+private void debug( String txt ){
+	log.debug(txt)
 }
 
 private Integer convertHexToInt(hex) {
