@@ -12,6 +12,8 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *	04-10-2017
+ *		- Increase timeout for requests from 7 to 20 seconds to prevent long sentences from repeating twice.	
  *
  *	22-08-2017
  *		- Prevent network and hub back-end spamming in discovery process
@@ -334,7 +336,7 @@ private getAction( params, callback ){
 // sendoff for calls
 private sendOff(){
 	waiting()
-    runIn(7, "stillWaiting")
+    runIn(20, "stillWaiting")
 }
 
 // receiver for unanswered calls
